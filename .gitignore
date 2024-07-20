@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 hide
+.DS_Store
+RShiny - smoking.Rproj

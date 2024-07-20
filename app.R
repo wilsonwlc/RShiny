@@ -1,3 +1,4 @@
+# Import libary
 library(readxl)
 library(stringr)
 library(tidyr)
@@ -5,10 +6,17 @@ library(dplyr)
 library(shiny)
 library(ggplot2)
 
+# Load data: Reads an Excel file containing smoking habits data
 file_path <- "adultsmokinghabitsingreatbritain.xlsx"
 df0 <- read_excel(file_path, sheet = "Table_1", range = "A9:T45")
+
+# Clean Column Names: Removes unwanted characters from column names
 colnames(df0) <- gsub("\r\n", "", colnames(df0))
 
+# Transform Data: Converts the data to a tidy format and extracts relevant information
+  # Pivot Data: Uses 'pivot_longer' to reshape the data
+  # Filter and Mutate: Filters for weighted data and extracts year, gender, and age
+  # Select Columns: Keeps only necessary columns
 pattern_gender <- "men|women|all persons"
 pattern_age <- "\\d{2} to \\d{2}|\\d{2} and over"
 name_target = "prop_cigarette_smokers"
@@ -22,13 +30,17 @@ df <- as.data.frame(df0) %>%
          age = str_extract(tolower(group), pattern_age)) %>%
   select(any_of(c("year", "gender", "age", name_target)))
 
+# Clean Environment: Removes unnecessary variables
 rm(list = setdiff(ls(), "df"))
-
 
 ui <- fluidPage(
   tabsetPanel(
     tabPanel("", title = "By gender",
              sidebarLayout(
+              # Sidebar Inputs
+                # CheckboxGroupInput: Selects genders to display
+                # SelectInput: Chooses the age group
+                # SliderInput: Selects the year range
                sidebarPanel(
                  checkboxGroupInput(inputId = "gender1",
                                     label = "Gender",
@@ -43,11 +55,16 @@ ui <- fluidPage(
                              label = "Year",
                              min = 2000, max = 2022,
                              value = c(2005, 2015), step = 1)),
+              # Main Panel: Displays a plot of cigarette smokers by gender 
                mainPanel(plotOutput("plot1"))
              ))
     ,
     tabPanel("", title = "By age group",
              sidebarLayout(
+              # Sidebar Inputs:
+                # SelectInput: Chooses gender
+                # CheckboxGroupInput: Selects age groups
+                # SliderInput: Selects the year range
                sidebarPanel(
                  selectInput(inputId = "gender2",
                              label = "Gender",
@@ -62,12 +79,16 @@ ui <- fluidPage(
                              label = "Year",
                              min = 2000, max = 2022,
                              value = c(2005, 2015), step = 1)),
+              # Main Panel: Displays a plot of cigarette smokers by age group 
                mainPanel(plotOutput("plot2"))
              ))
   )
 )
 
 server <- function(input, output){
+  # Plot 1 (By Gender):
+    # Filters data based on user input for gender, age, and year range
+    # Plots a line graph showing the proportion of smokers over time
   output$plot1 <- renderPlot({
     df %>%
       filter(year >= input$year1[1], year <= input$year1[2],
@@ -87,7 +108,9 @@ server <- function(input, output){
             legend.text = element_text(size = 12),
             legend.title = element_text(size = 14))
   })
-
+  # Plot 2 (By Age Group):
+    # Filters data based on user input for gender, age groups, and year range
+    # Plots a line graph showing the proportion of smokers over time
   output$plot2 <- renderPlot({
     df %>%
       filter(year >= input$year2[1], year <= input$year2[2],
@@ -103,5 +126,5 @@ server <- function(input, output){
   })
 }
 
-# Run the app
+# Running the App
 shinyApp(ui, server)
